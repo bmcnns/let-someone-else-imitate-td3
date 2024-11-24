@@ -1,86 +1,56 @@
-import pickle
-from copy import deepcopy
-from statistics import median
-from uuid import uuid4
-
 import minari
 import numpy as np
 import torch
-from tqdm import tqdm
-import random
-import parameters
+import pickle
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-from pareto import ParetoSelector
-from td3.critic import TD3CriticWrapper
 
 from data_processor import create_offline_dataset_from_minari
-from linear_gp import Program, Mutator
+
+from sklearn.model_selection import train_test_split
+from pyoperon.sklearn import SymbolicRegressor
 
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     offline_data = create_offline_dataset_from_minari(
         minari.load_dataset("HalfCheetah-Expert-v2"),
-        shuffle=True
-    )
+    ).dataset
 
-    td3_critic = TD3CriticWrapper()
+    X, y, _, _, _ = offline_data.tensors
+    y = y[:, 0]
+    print(y.shape)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    print(f"X_train shape: {X_train.shape}, X_test shape: {X_test.shape}, y_train shape: {y_train.shape}, y_test shape: {y_test.shape}")
 
-    population = [ (Program(), uuid4()) for _ in range(parameters.POPULATION_SIZE)]
+    values = []
+    for _ in range(1):
+        reg = SymbolicRegressor(
+            allowed_symbols='add,sub,mul,aq,sin,constant,variable',
+            offspring_generator='basic',
+            optimizer_iterations=10,
+            max_length=50,
+            initialization_method='btc',
+            n_threads=8,
+            objectives=['r2', 'length'],
+            epsilon=0,
+            random_state=None,
+            reinserter='keep-best',
+            max_evaluations=int(1e6),
+            symbolic_mode=False,
+            tournament_size=3
+        )
 
-    timesteps = 0
+        reg.fit(X_train, y_train)
 
-    #min_mse = 20.0
-    for batch in offline_data:
-        states, _, rewards, _, expert_actions = [
-            data.to(device) for data in batch
-        ]
+        values += [t['objective_values'] for t in reg.pareto_front_]
 
-        fitnesses = {}
-        value_fitnesses = {}
-        #mse_fitnesses = {}
-        reward_fitnesses = {}
-        for individual, individual_id in tqdm(population):
-            # Actions are the 6-registers that each individual predicts for a feature set
-            actions = [individual.predict(np.array(state.cpu()))[:6] for state in states]
-            actions = torch.tensor(actions, device=device)
+    with open('action1.pkl', 'wb') as f:
+        pickle.dump((reg, values), f)
 
-            # Fitness is the sum Q-value for all state, action pairs.
-            value_fitness = td3_critic.predict(states, actions).sum().cpu().detach().numpy() / len(states)
-            reward_fitness = rewards.sum().cpu().detach().numpy()
-
-            mse = np.mean([(action.cpu().numpy() - expert_action.cpu().numpy()) ** 2 for action, expert_action in zip(actions, expert_actions)])
-
-            #if mse < min_mse:
-            #    adjusted_mse = 1 / mse  # Inverse or scaled-up MSE
-            #else:
-            #    adjusted_mse = mse
-
-            fitnesses[individual_id] = (value_fitness, -mse)
-            value_fitnesses[individual_id] = value_fitness
-            reward_fitnesses[individual_id] = mse
-            #mse_fitnesses[individual_id] = adjusted_mse
-
-        population = ParetoSelector.select_popgap_individuals(population, fitnesses)
-
-        parents = random.choices(population, k=int(parameters.POP_GAP * parameters.POPULATION_SIZE))
-        for parent, parent_id in parents:
-            child = deepcopy(parent)
-            Mutator.mutateProgram(child)
-            population.append((child, uuid4()))
-
-        median_value_fitness = np.median(np.array(list(value_fitnesses.values())))
-        best_value_fitness = np.max(np.array(list(value_fitnesses.values())))
-
-        median_reward_fitness = np.median(np.array(list(reward_fitnesses.values())))
-        best_reward_fitness = np.min(np.array(list(reward_fitnesses.values())))
-
-        print(f"Timestep {timesteps}, Best Q-Score: {best_value_fitness:.3f}, Best MSE {best_reward_fitness:.3f}")
-        timesteps += len(states)
-
-        if timesteps % 10240 == 0:
-            with open(f'results/HalfCheetah-v5_{timesteps}.pkl', 'wb') as f:
-                pickle.dump({"population": population, "fitnesses": fitnesses}, f)
-
-        if timesteps >= 1_000_000:
-            break
+    values = np.array(values)
+    fig, ax = plt.subplots(figsize=(18, 8))
+    ax.grid(True, linestyle='dotted')
+    ax.set(xlabel='Obj 1 (Tree length)', ylabel='Obj 2 (-R2)')
+    sns.scatterplot(ax=ax, x=values[:, 1], y=values[:, 0])

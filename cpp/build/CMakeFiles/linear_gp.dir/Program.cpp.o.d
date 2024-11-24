@@ -1,9 +1,9 @@
 CMakeFiles/linear_gp.dir/Program.cpp.o: \
- /home/bryce/Repos/can-gp-learn-from-td3-critic/cpp/Program.cpp \
+ /home/bryce/Repos/synergistic-gp/cpp/Program.cpp \
  /usr/include/stdc-predef.h \
- /home/bryce/Repos/can-gp-learn-from-td3-critic/cpp/Program.h \
- /usr/include/c++/13/array /usr/include/c++/13/compare \
- /usr/include/c++/13/concepts /usr/include/c++/13/type_traits \
+ /home/bryce/Repos/synergistic-gp/cpp/Program.h /usr/include/c++/13/array \
+ /usr/include/c++/13/compare /usr/include/c++/13/concepts \
+ /usr/include/c++/13/type_traits \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/os_defines.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -137,7 +137,7 @@ CMakeFiles/linear_gp.dir/Program.cpp.o: \
  /usr/include/c++/13/bits/stl_vector.h \
  /usr/include/c++/13/bits/stl_bvector.h \
  /usr/include/c++/13/bits/vector.tcc \
- /home/bryce/Repos/can-gp-learn-from-td3-critic/cpp/Parameters.h \
+ /home/bryce/Repos/synergistic-gp/cpp/Parameters.h \
  /usr/include/c++/13/bitset /usr/include/c++/13/iostream \
  /usr/include/c++/13/ostream /usr/include/c++/13/ios \
  /usr/include/c++/13/exception /usr/include/c++/13/bits/exception_ptr.h \

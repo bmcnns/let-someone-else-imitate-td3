@@ -28,6 +28,8 @@ public:
 
     void addRandomInstruction();
 
+    void addInstruction(uint32_t instruction);
+
     Program();
 
     void execute(const std::vector<double> &features);

@@ -126,3 +126,32 @@ void Mutator::mutateInstruction(uint32_t &instruction) {
         std::cerr << "Unknown mutation" << std::endl;
     }
 }
+
+std::pair<Program, Program> Mutator::crossover(const Program &program1, const Program &program2) {
+    std::uniform_int_distribution<> dist1(0, program1.instructions.size() - 1);
+    std::uniform_int_distribution<> dist2(0, program2.instructions.size() - 1);
+
+    int crossoverPoint1 = dist1(gen);
+    int crossoverPoint2 = dist2(gen);
+
+    Program child1, child2;
+    child1.instructions.clear();
+    child2.instructions.clear();
+
+    for (int i = 0; i < crossoverPoint1; ++i) {
+        child1.addInstruction(program1.instructions[i]);
+    }
+
+    for (int i = crossoverPoint2; i < program2.instructions.size(); i++) {
+        child1.addInstruction(program2.instructions[i]);
+    }
+
+    for (int i = 0; i < crossoverPoint2; ++i) {
+        child2.addInstruction(program2.instructions[i]);
+    }
+    for (int i = crossoverPoint1; i < program1.instructions.size(); i++) {
+        child2.addInstruction(program1.instructions[i]);
+    }
+
+    return {child1, child2};
+}

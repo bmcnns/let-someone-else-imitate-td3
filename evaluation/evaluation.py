@@ -2,7 +2,7 @@ import gymnasium as gym
 from gymnasium.wrappers import RecordVideo
 import pickle
 
-model_name = 'HalfCheetah-v5_225280.pkl'
+model_name = 'HalfCheetah-v5_90000.pkl'
 with open(f"../results/{model_name}", 'rb') as f:
     model = pickle.load(f)
 

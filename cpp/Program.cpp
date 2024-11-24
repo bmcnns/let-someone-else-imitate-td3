@@ -33,17 +33,21 @@ void Program::addRandomInstruction() {
     instructions.push_back(instruction);
 }
 
+void Program::addInstruction(uint32_t instruction) {
+  instructions.push_back(instruction);
+}
+
 Program::Program() {
     int numInstructions = getRandomNumber(1, Parameters::MAX_PROGRAM_LENGTH);
     for (int i = 0; i < numInstructions; ++i) {
         addRandomInstruction();
     }
 
-    registers.fill(0.0);
+    registers.fill(0.5);
 }
 
 void Program::execute(const std::vector<double>& features) {
-    registers.fill(0.0);
+    registers.fill(0.5);
 
     for (const uint32_t instruction : instructions) {
         bool modeBit = (instruction >> MODE_SHIFT) & MODE_MASK;
@@ -67,14 +71,14 @@ void Program::execute(const std::vector<double>& features) {
                 registers[dest] -= sourceValue;
                 break;
             case 2:
-                registers[dest] *= 2.0;
+                registers[dest] *= sourceValue;
                 break;
             case 3:
                 if (sourceValue != 0) {
                     registers[dest] /= sourceValue;
                 }
                 else {
-                    registers[dest] = 0.0;
+                    registers[dest] = 1.0;
                 }
                 break;
             case 4:
@@ -120,34 +124,34 @@ void Program::displayCode() const {
 
         // Build the plain English description
         std::string srcStr;
-        std::string destStr = "register[" + std::to_string(dest) + "]";
+        std::string destStr = "R[" + std::to_string(dest) + "]";
 
         if (modeBit == 0) {
-            srcStr = "register[" + std::to_string(src) + "]";
+            srcStr = "R[" + std::to_string(src) + "]";
         }
         else {
-            srcStr = "feature[" + std::to_string(src) + "]";
+            srcStr = "OBS[" + std::to_string(src) + "]";
         }
 
         std::string operation;
         switch (opCode) {
             case 0:
-                operation = "Add " + srcStr + " to " + destStr;
+                operation = destStr + " = " + destStr + " + " + srcStr;
             break;
             case 1:
-                operation = "Subtract " + srcStr + " from " + destStr;
+                operation = destStr + " = " + destStr + " - " + srcStr;
             break;
             case 2:
-                operation = "Multiply " + destStr + " by " + srcStr;
+                operation = destStr + " = " + destStr + " * " + srcStr;
             break;
             case 3:
-                operation = "Divide " + destStr + " by " + srcStr;
+                operation = destStr + " = " + destStr + " / " + srcStr;
             break;
             case 4:
-                operation = "Set " + destStr + " to the cosine of " + srcStr;
+                operation = destStr + " = " + "COS(" + srcStr + ")";
             break;
             case 5:
-                operation = "Negate " + destStr + " if less than " + srcStr;
+	    	operation = "IF " + destStr + " < " + srcStr + " THEN " + destStr + " = -" + destStr;
             break;
             default:
                 operation = "Unknown operation";

@@ -30,5 +30,6 @@ PYBIND11_MODULE(linear_gp, m) {
 
     py::class_<Mutator>(m, "Mutator")
     .def(py::init<>())
-    .def("mutateProgram", &Mutator::mutateProgram);
+    .def("mutateProgram", &Mutator::mutateProgram)
+    .def("crossover", &Mutator::crossover);
 }
